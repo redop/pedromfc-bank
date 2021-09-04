@@ -58,7 +58,7 @@ func (accReq *accountCreateRequest) validate() error {
 		return pwTooLongError
 	}
 
-	if cpfRegex.MatchString(accReq.CPF) {
+	if !cpfRegex.MatchString(accReq.CPF) {
 		return cpfInvalidError
 	}
 
