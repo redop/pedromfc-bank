@@ -39,9 +39,17 @@ func main() {
 
 	flag.Parse()
 
+	var err = openDBPool()
+	defer db.Close()
+
+	if err != nil {
+		logger.Fatal(err)
+		return
+	}
+
 	http.HandleFunc("/", welcomeResponse)
 
-	var err = http.ListenAndServeTLS(
+	err = http.ListenAndServeTLS(
 		"localhost:8080",
 		strings.Join([]string{certs_dir, "/cert.pem"}, ""),
 		strings.Join([]string{certs_dir, "/key.pem"}, ""),
