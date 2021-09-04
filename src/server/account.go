@@ -167,15 +167,6 @@ func insertAccount(ctx context.Context,
 
 // Handler for creating an account for POST requests at /accounts
 func createAccount(rw http.ResponseWriter, req *http.Request) {
-	if req.URL.Path != "/accounts" {
-		respondWithError(rw, invalidURLError)
-		return
-	}
-
-	if req.Method != http.MethodPost {
-		respondWithError(rw, invalidMethodError)
-	}
-
 	var account *account
 	var accountReq accountCreateRequest
 
@@ -232,5 +223,87 @@ func createAccount(rw http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		logger.Printf("Could not write response: %v", err)
+	}
+}
+
+// Handler for getting a list of accounts for GET requests at /accounts
+func getAccounts(rw http.ResponseWriter, req *http.Request) {
+
+	rows, err := db.Query(
+		"select id, name, cpf, balance, created_at from accounts")
+
+	if err != nil {
+		respondWithError(rw, err)
+		return
+	}
+
+	defer rows.Close()
+
+	var acc account
+
+	// Ideally we'd have some form of pagination. For simplicity, allocate a
+	// reasonable amount of space, and assume there won't be too many accounts
+	// to return to the client.
+	var accounts []account = make([]account, 0, 64)
+
+	next_p := rows.Next()
+
+	for next_p {
+		err = rows.Scan(&acc.ID, &acc.Name, &acc.CPF,
+			&acc.Balance, &acc.CreatedAt)
+
+		if err != nil {
+			logger.Printf("error when querying accounts")
+			respondWithError(rw, err)
+			return
+		}
+
+		accounts = append(accounts, acc)
+
+		next_p = rows.Next()
+	}
+
+	if err = rows.Err(); err != nil {
+		logger.Printf("error when querying accounts")
+		respondWithError(rw, err)
+		return
+	}
+
+	var jsonResponse []byte
+	jsonResponse, err = json.Marshal(accounts)
+
+	if err != nil {
+		logger.Printf("error when marshalling accounts")
+		respondWithError(rw, err)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
+
+	_, err = rw.Write(jsonResponse)
+
+	if err == nil {
+		_, err = rw.Write([]byte("\n"))
+	}
+
+	if err != nil {
+		logger.Printf("Could not write response: %v", err)
+	}
+}
+
+// Route requests to /accounts depending on the method (GET or POST)
+func handleAccounts(rw http.ResponseWriter, req *http.Request) {
+
+	if req.URL.Path != "/accounts" {
+		respondWithError(rw, invalidURLError)
+		return
+	}
+
+	if req.Method == http.MethodPost {
+		createAccount(rw, req)
+	} else if req.Method == http.MethodGet {
+		getAccounts(rw, req)
+	} else {
+		respondWithError(rw, invalidMethodError)
 	}
 }
