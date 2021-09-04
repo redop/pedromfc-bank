@@ -29,3 +29,15 @@ func newPublicError(status int, errMsg string) *publicJSONError {
 var invalidURLError = newPublicError(http.StatusNotFound, "invalid url")
 var invalidMethodError = newPublicError(http.StatusMethodNotAllowed,
 	"bad method for url")
+var cantParseJSONError = newPublicError(http.StatusBadRequest,
+	"can't parse request JSON")
+var requestTooLongError = newPublicError(http.StatusRequestEntityTooLarge,
+	"request too long")
+var emptyRequestError = newPublicError(http.StatusBadRequest, "empty request")
+
+// Account errors
+var nameTooLongError = newPublicError(http.StatusBadRequest, "name too long")
+var pwTooLongError = newPublicError(http.StatusBadRequest, "password too long")
+var cpfInvalidError = newPublicError(http.StatusBadRequest, "bad CPF format")
+var accExistsError = newPublicError(http.StatusBadRequest,
+	"account already exists")

@@ -48,6 +48,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", welcomeResponse)
+	http.HandleFunc("/accounts", createAccount)
 
 	err = http.ListenAndServeTLS(
 		"localhost:8080",
