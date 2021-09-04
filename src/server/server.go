@@ -48,6 +48,6 @@ func main() {
 		nil)
 
 	if err != nil {
-		fmt.Println(err)
+		logger.Fatal(err)
 	}
 }
