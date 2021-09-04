@@ -17,7 +17,7 @@ func respondWithError(rw http.ResponseWriter, err error) error {
 
 	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
 
-	var publicError *PublicJSONError
+	var publicError *publicJSONError
 	var status int
 	var errMsg string
 
