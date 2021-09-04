@@ -49,6 +49,7 @@ func main() {
 
 	http.HandleFunc("/", welcomeResponse)
 	http.HandleFunc("/accounts", handleAccounts)
+	http.HandleFunc("/accounts/", getAccountBalance)
 
 	err = http.ListenAndServeTLS(
 		"localhost:8080",

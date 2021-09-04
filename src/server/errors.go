@@ -41,3 +41,7 @@ var pwTooLongError = newPublicError(http.StatusBadRequest, "password too long")
 var cpfInvalidError = newPublicError(http.StatusBadRequest, "bad CPF format")
 var accExistsError = newPublicError(http.StatusBadRequest,
 	"account already exists")
+var idTooLargeError = newPublicError(http.StatusBadRequest,
+	"id too large")
+var noAccountError = newPublicError(http.StatusNotFound,
+	"account does not exist")

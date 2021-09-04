@@ -5,9 +5,11 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -305,5 +307,64 @@ func handleAccounts(rw http.ResponseWriter, req *http.Request) {
 		getAccounts(rw, req)
 	} else {
 		respondWithError(rw, invalidMethodError)
+	}
+}
+
+// Regex to match account balance requests.
+var balanceURLRegex *regexp.Regexp = regexp.MustCompile(
+	`^/accounts/([0-9]+)/balance$`)
+
+// Handles GET requests at /accounts/<id>/balance
+func getAccountBalance(rw http.ResponseWriter, req *http.Request) {
+	var err error
+
+	matches := balanceURLRegex.FindStringSubmatch(req.URL.Path)
+
+	if matches == nil || len(matches) != 2 {
+		respondWithError(rw, invalidURLError)
+		return
+	}
+
+	if req.Method != http.MethodGet {
+		respondWithError(rw, invalidMethodError)
+		return
+	}
+
+	// Our db uses ints for the ids, so max 32 bits. The regex already
+	// disallows negative numbers.
+	id, err := strconv.ParseInt(matches[1], 0, 32)
+
+	if errors.Is(err, strconv.ErrRange) {
+		respondWithError(rw, idTooLargeError)
+		return
+	} else if err != nil {
+		// Shouldn't happen since we validated the int from the regex
+		logger.Printf("Could not convert url int (???)")
+		respondWithError(rw, err)
+		return
+	}
+
+	logger.Printf("Getting balance for account %d", id)
+
+	row := db.QueryRow("select balance from accounts where id = $1", id)
+
+	var balance money
+	err = row.Scan(&balance)
+
+	if err == sql.ErrNoRows {
+		respondWithError(rw, noAccountError)
+		return
+	} else if err != nil {
+		respondWithError(rw, err)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
+
+	_, err = rw.Write([]byte(fmt.Sprintf("{\"id\":%d,\"balance\":%s}\n",
+		id, balance.String())))
+
+	if err != nil {
+		logger.Printf("Could not write response: %v", err)
 	}
 }
