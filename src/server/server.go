@@ -3,6 +3,7 @@
 package server
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -30,6 +31,11 @@ func welcomeResponse(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+var server http.Server = http.Server{Addr: "localhost:8080"}
+
+// Channel that signals when the server finishes
+var ServerFinished = make(chan interface{})
+
 // Starts the http server. The -certs argument for the binary indicates the
 // location of the self-signed certificate and key.
 func Run() {
@@ -51,13 +57,15 @@ func Run() {
 	http.HandleFunc("/accounts", handleAccounts)
 	http.HandleFunc("/accounts/", getAccountBalance)
 
-	err = http.ListenAndServeTLS(
-		"localhost:8080",
+	err = server.ListenAndServeTLS(
 		strings.Join([]string{certs_dir, "/cert.pem"}, ""),
-		strings.Join([]string{certs_dir, "/key.pem"}, ""),
-		nil)
+		strings.Join([]string{certs_dir, "/key.pem"}, ""))
 
-	if err != nil {
-		logger.Fatal(err)
-	}
+	logger.Print(err)
+
+	close(ServerFinished)
+}
+
+func Stop() {
+	server.Shutdown(context.Background())
 }
