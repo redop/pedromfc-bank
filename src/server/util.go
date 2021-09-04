@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 )
 
 var logger = log.New(os.Stdout, "server: ", log.LstdFlags|log.Lmsgprefix)
@@ -82,3 +83,6 @@ func readFromReq(req *http.Request, maxLen int) ([]byte, error) {
 func setJSONEncoding(rw http.ResponseWriter) {
 	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
 }
+
+var cpfRegex *regexp.Regexp = regexp.MustCompile(
+	`^[0-9]{3}\.[0-9]{3}-[0-9]{2}$`)

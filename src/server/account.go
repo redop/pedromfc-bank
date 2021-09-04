@@ -58,15 +58,7 @@ func (accReq *accountCreateRequest) validate() error {
 		return pwTooLongError
 	}
 
-	matched, err := regexp.MatchString(
-		"^[0-9]{3}\\.[0-9]{3}-[0-9]{2}$", accReq.CPF)
-
-	if err != nil {
-		logger.Print(err)
-		return err
-	}
-
-	if !matched {
+	if cpfRegex.MatchString(accReq.CPF) {
 		return cpfInvalidError
 	}
 
