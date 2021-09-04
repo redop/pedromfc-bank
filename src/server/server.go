@@ -22,7 +22,7 @@ func welcomeResponse(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	setJSONEncoding(rw)
 	_, err := fmt.Fprintf(rw, "Welcome to PedroBank!\n")
 
 	if err != nil {

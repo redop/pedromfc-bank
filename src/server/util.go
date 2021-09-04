@@ -16,7 +16,7 @@ var logger = log.New(os.Stdout, "server: ", log.LstdFlags|log.Lmsgprefix)
 // respond with a generic internal error message and log the error.
 func respondWithError(rw http.ResponseWriter, err error) error {
 
-	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	setJSONEncoding(rw)
 
 	var publicError *publicJSONError
 	var status int
@@ -77,4 +77,8 @@ func readFromReq(req *http.Request, maxLen int) ([]byte, error) {
 	} else {
 		return nil, err
 	}
+}
+
+func setJSONEncoding(rw http.ResponseWriter) {
+	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
 }

@@ -212,7 +212,7 @@ func createAccount(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	setJSONEncoding(rw)
 	rw.WriteHeader(http.StatusCreated)
 
 	_, err = rw.Write(jsonResponse)
@@ -280,7 +280,7 @@ func getAccounts(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	setJSONEncoding(rw)
 
 	_, err = rw.Write(jsonResponse)
 
@@ -359,7 +359,7 @@ func getAccountBalance(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	setJSONEncoding(rw)
 
 	_, err = rw.Write([]byte(fmt.Sprintf("{\"id\":%d,\"balance\":%s}\n",
 		id, balance.String())))
