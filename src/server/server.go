@@ -1,6 +1,6 @@
 // PedroBank server
 
-package main
+package server
 
 import (
 	"flag"
@@ -32,7 +32,7 @@ func welcomeResponse(rw http.ResponseWriter, req *http.Request) {
 
 // Starts the http server. The -certs argument for the binary indicates the
 // location of the self-signed certificate and key.
-func main() {
+func Run() {
 	var certs_dir string
 	flag.StringVar(&certs_dir, "certs", ".",
 		"Directory with key.pem and cert.pem")

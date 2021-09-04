@@ -1,4 +1,4 @@
-module server
+module pedro-bank
 
 go 1.16
 
