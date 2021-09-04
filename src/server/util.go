@@ -10,6 +10,9 @@ import (
 
 var logger = log.New(os.Stdout, "server: ", log.LstdFlags|log.Lmsgprefix)
 
+// Respond to the client with an error. If err has a public error in its
+// unrwap chain, respond with the message in that error. Otherwise,
+// respond with a generic internal error message and log the error.
 func respondWithError(rw http.ResponseWriter, err error) error {
 
 	rw.Header().Set("Content-Type", "application/json;charset=UTF-8")
