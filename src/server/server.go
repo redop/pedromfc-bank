@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+// Respond with a welcome message when client GETs path /
+// Respond with an error for other paths matched by this function.
 func welcomeResponse(rw http.ResponseWriter, req *http.Request) {
 	if req.URL.Path != "/" {
 		respondWithError(rw, InvalidURLError)
