@@ -4,7 +4,6 @@ package server
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"net/http"
 	"strings"
@@ -38,13 +37,7 @@ var ServerFinished = make(chan interface{})
 
 // Starts the http server. The -certs argument for the binary indicates the
 // location of the self-signed certificate and key.
-func Run() {
-	var certs_dir string
-	flag.StringVar(&certs_dir, "certs", ".",
-		"Directory with key.pem and cert.pem")
-
-	flag.Parse()
-
+func Run(certsDir string) {
 	var err = openDBPool()
 	defer db.Close()
 
@@ -58,8 +51,8 @@ func Run() {
 	http.HandleFunc("/accounts/", getAccountBalance)
 
 	err = server.ListenAndServeTLS(
-		strings.Join([]string{certs_dir, "/cert.pem"}, ""),
-		strings.Join([]string{certs_dir, "/key.pem"}, ""))
+		strings.Join([]string{certsDir, "/cert.pem"}, ""),
+		strings.Join([]string{certsDir, "/key.pem"}, ""))
 
 	logger.Print(err)
 

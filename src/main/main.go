@@ -1,7 +1,16 @@
 package main
 
-import "pedro-bank/server"
+import (
+	"flag"
+	"pedro-bank/server"
+)
 
 func main() {
-	server.Run()
+	var certsDir string
+	flag.StringVar(&certsDir, "certs", ".",
+		"Directory with key.pem and cert.pem")
+
+	flag.Parse()
+
+	server.Run(certsDir)
 }
