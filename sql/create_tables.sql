@@ -2,6 +2,9 @@ CREATE DATABASE pedro_bank;
 
 \c pedro_bank
 
+ALTER DATABASE pedro_bank SET default_transaction_isolation TO
+"repeatable read";
+
 CREATE TABLE accounts (
     -- Start at 1 to avoid errors when unmarshalling json with no id field,
     -- which would become 0.
