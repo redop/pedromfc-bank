@@ -96,7 +96,7 @@ func insertAccount(ctx context.Context,
 
 	var err error
 	var tx *sql.Tx
-	var account account
+	var acc account
 
 	tx, err = db.BeginTx(ctx, &defaultTxOptions)
 
@@ -144,9 +144,9 @@ func insertAccount(ctx context.Context,
 		created_at from accounts where id = $1`, id)
 
 	err = row.Scan(
-		&account.ID, &account.Name, &account.CPF,
-		&account.secret, &account.Balance,
-		&account.CreatedAt)
+		&acc.ID, &acc.Name, &acc.CPF,
+		&acc.secret, &acc.Balance,
+		&acc.CreatedAt)
 
 	if err != nil {
 		logger.Printf("Error retrieving inserted account")
@@ -161,13 +161,13 @@ func insertAccount(ctx context.Context,
 		return nil, err
 	}
 
-	logger.Printf("Inserted account with id %d", account.ID)
-	return &account, nil
+	logger.Printf("Inserted account with id %d", acc.ID)
+	return &acc, nil
 }
 
 // Handler for creating an account for POST requests at /accounts
 func createAccount(rw http.ResponseWriter, req *http.Request) {
-	var account *account
+	var acc *account
 	var accountReq accountCreateRequest
 
 	// About 32 + 10 + 32 = 74 bytes for the values, plus change for json
@@ -193,14 +193,14 @@ func createAccount(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	account, err = insertAccount(req.Context(), &accountReq)
+	acc, err = insertAccount(req.Context(), &accountReq)
 
 	if err != nil {
 		respondWithError(rw, err)
 		return
 	}
 
-	jsonResponse, err := json.Marshal(account)
+	jsonResponse, err := json.Marshal(acc)
 
 	if err != nil {
 		logger.Printf(
