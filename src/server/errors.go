@@ -19,13 +19,13 @@ func (err *publicJSONError) Error() string {
 
 // Buold a public error. errMsg should be a simple error message, not in JSON,
 // this function handles creating the JSON for it.
-func NewPublicError(status int, errMsg string) *publicJSONError {
+func newPublicError(status int, errMsg string) *publicJSONError {
 	return &publicJSONError{
 		fmt.Sprintf(jsonErrFmt, errMsg),
 		status}
 }
 
 // Generic errors
-var InvalidURLError = NewPublicError(http.StatusNotFound, "invalid url")
-var InvalidMethodError = NewPublicError(http.StatusMethodNotAllowed,
+var invalidURLError = newPublicError(http.StatusNotFound, "invalid url")
+var invalidMethodError = newPublicError(http.StatusMethodNotAllowed,
 	"bad method for url")

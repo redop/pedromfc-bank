@@ -13,12 +13,12 @@ import (
 // Respond with an error for other paths matched by this function.
 func welcomeResponse(rw http.ResponseWriter, req *http.Request) {
 	if req.URL.Path != "/" {
-		respondWithError(rw, InvalidURLError)
+		respondWithError(rw, invalidURLError)
 		return
 	}
 
 	if req.Method != http.MethodGet {
-		respondWithError(rw, InvalidMethodError)
+		respondWithError(rw, invalidMethodError)
 		return
 	}
 
