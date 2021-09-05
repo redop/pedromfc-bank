@@ -1,3 +1,4 @@
+DROP DATABASE pedro_bank;
 CREATE DATABASE pedro_bank;
 
 \c pedro_bank
@@ -20,6 +21,15 @@ CREATE TABLE accounts (
     -- BRL cents. We don't need more precision sicne we only add/substract
     -- from the account balance.
     balance INTEGER NOT NULL,
+    -- No time zone, store always as UTC
+    created_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE transfers (
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START 1),
+    origin_id INTEGER NOT NULL REFERENCES accounts (id),
+    destination_id INTEGER NOT NULL REFERENCES accounts (id),
+    amount INTEGER NOT NULL,
     -- No time zone, store always as UTC
     created_at TIMESTAMP NOT NULL
 );

@@ -63,3 +63,13 @@ var invalidAmountError = newPublicError(http.StatusBadRequest,
 	"invalid amount")
 var amountTooLargeError = newPublicError(http.StatusBadRequest,
 	"amount too large")
+var zeroAmountError = newPublicError(http.StatusBadRequest,
+	"zero amount")
+var badDestinationIdError = newPublicError(http.StatusBadRequest,
+	"invalid destination id")
+var noOrigAccountError = newPublicError(http.StatusNotFound,
+	"origin account does not exist")
+var noDestAccountError = newPublicError(http.StatusNotFound,
+	"destination account does not exist")
+var insufficientFundsError = newPublicError(http.StatusBadRequest,
+	"insufficient funds")

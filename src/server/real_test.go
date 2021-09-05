@@ -17,6 +17,10 @@ type jsonError struct {
 	Err string `json:"error"`
 }
 
+type tokenResponse struct {
+	Token string `json:"token"`
+}
+
 const url = "https://localhost:8080"
 
 func get(path string) (*http.Response, error) {
@@ -258,6 +262,189 @@ func TestCreateBadAccounts(t *testing.T) {
 	}
 }
 
+func TestCreateTransfers(t *testing.T) {
+	var respBytes []byte
+	var err error
+	var resp *http.Response
+	var jsonBytes []byte
+	var accs [2]account //src, dst
+
+	// Create two accounts for transfering
+	var testAccounts = []accountCreateRequest{
+		accountCreateRequest{
+			Name: "John Doe", CPF: "320.321-11", Secret: "toto"},
+		accountCreateRequest{
+			Name: "Jane Doe", CPF: "321.321-11", Secret: "tata"},
+	}
+
+	for i, testAccount := range testAccounts {
+
+		jsonBytes, err = json.Marshal(&testAccount)
+
+		if err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
+
+		resp, err = postJSONBytes("/accounts", jsonBytes)
+
+		if err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
+
+		if resp.StatusCode != http.StatusCreated {
+			resp.Body.Close()
+			t.Log(resp.StatusCode)
+			t.FailNow()
+		}
+
+		respBytes, err = getResponseBytes(resp)
+
+		if err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
+
+		err = json.Unmarshal(respBytes, &accs[i])
+
+		if err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
+	}
+
+	// Login as the first user
+	loginReq := loginRequest{
+		CPF:    testAccounts[0].CPF,
+		Secret: testAccounts[0].Secret}
+
+	jsonBytes, err = json.Marshal(&loginReq)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	resp, err = postJSONBytes("/login", jsonBytes)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		resp.Body.Close()
+		t.Log(resp.StatusCode)
+		t.FailNow()
+	}
+
+	respBytes, err = getResponseBytes(resp)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	var tokJSON tokenResponse
+	err = json.Unmarshal(respBytes, &tokJSON)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	// Transfer to second user
+
+	var transfReq = transferRequest{DestinationID: accs[1].ID,
+		Amount: 33452}
+
+	jsonBytes, err = json.Marshal(&transfReq)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	var req *http.Request
+	req, err = http.NewRequest(http.MethodPost, url+"/transfers",
+		bytes.NewReader(jsonBytes))
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	req.Header.Set("Authorization", tokJSON.Token)
+
+	resp, err = client.Do(req)
+
+	if err != nil {
+		t.Log(err)
+		resp.Body.Close()
+		t.FailNow()
+	}
+
+	respBytes, err = getResponseBytes(resp)
+
+	if err != nil {
+		t.Log(err)
+		resp.Body.Close()
+		t.FailNow()
+	}
+
+	var transf transfer
+	err = json.Unmarshal(respBytes, &transf)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if transf.Amount != transfReq.Amount {
+		t.FailNow()
+	}
+
+	// Get the list of accounts to check their balance
+	resp, err = get("/accounts")
+
+	if err != nil {
+		t.Log(err)
+		resp.Body.Close()
+		t.FailNow()
+	}
+
+	respBytes, err = getResponseBytes(resp)
+
+	if err != nil {
+		t.Log(err)
+		resp.Body.Close()
+		t.FailNow()
+	}
+
+	var allAccs []account
+	err = json.Unmarshal(respBytes, &allAccs)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	for _, acc := range allAccs {
+		if acc.ID == accs[0].ID {
+			if acc.Balance != accs[0].Balance-transf.Amount {
+				t.Log(acc.Balance)
+				t.Fail()
+			}
+		} else if acc.ID == accs[1].ID {
+			if acc.Balance != accs[0].Balance+transf.Amount {
+				t.Log(acc.Balance)
+				t.Fail()
+			}
+		}
+	}
+}
+
 // This is a big test that starts the server and talks to it with http.Client.
 // It deletes stuff in the database to clear it first.
 func TestMain(m *testing.M) {
@@ -272,6 +459,14 @@ func TestMain(m *testing.M) {
 
 	if err != nil {
 		fmt.Println("Could not open DB.")
+		os.Exit(1)
+	}
+
+	// Clean up the transfers before we test.
+	_, err = DB.Exec("delete from transfers")
+
+	if err != nil {
+		fmt.Printf("Could not delete accounts: %v\n", err)
 		os.Exit(1)
 	}
 
