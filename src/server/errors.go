@@ -45,3 +45,9 @@ var idTooLargeError = newPublicError(http.StatusBadRequest,
 	"id too large")
 var noAccountError = newPublicError(http.StatusNotFound,
 	"account does not exist")
+
+// Login errors
+var wrongPasswordError = newPublicError(http.StatusBadRequest,
+	"wrong password")
+var tryAgainError = newPublicError(http.StatusConflict,
+	"please try again")

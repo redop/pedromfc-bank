@@ -49,6 +49,7 @@ func Run(certsDir string) {
 	http.HandleFunc("/", welcomeResponse)
 	http.HandleFunc("/accounts", handleAccounts)
 	http.HandleFunc("/accounts/", getAccountBalance)
+	http.HandleFunc("/login", login)
 
 	err = server.ListenAndServeTLS(
 		strings.Join([]string{certsDir, "/cert.pem"}, ""),
