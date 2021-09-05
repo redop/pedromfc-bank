@@ -144,6 +144,8 @@ func login(rw http.ResponseWriter, req *http.Request) {
 
 const loginTimeout = 2 * time.Minute
 
+// Periodically clean up expired logins. Call this in a goroutine. Cancel the
+// context to stop the goroutine.
 func loginClean(ctx context.Context) {
 
 	done := ctx.Done()
