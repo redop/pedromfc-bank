@@ -112,12 +112,6 @@ func TestWelcomeBadMethod(t *testing.T) {
 	}
 }
 
-var testAccounts = []accountCreateRequest{
-	accountCreateRequest{Name: "John Doe", CPF: "220.321-11", Secret: "toto"},
-	accountCreateRequest{Name: "Jane Doe", CPF: "221.321-11", Secret: "tata"},
-	accountCreateRequest{Name: "Arseny", CPF: "222.321-13", Secret: "tete"},
-}
-
 func TestCreateAccounts(t *testing.T) {
 	var respBytes []byte
 	var err error
@@ -125,6 +119,15 @@ func TestCreateAccounts(t *testing.T) {
 	var jsonBytes []byte
 	var acc account
 	var jsonErr jsonError
+
+	var testAccounts = []accountCreateRequest{
+		accountCreateRequest{
+			Name: "John Doe", CPF: "220.321-11", Secret: "toto"},
+		accountCreateRequest{
+			Name: "Jane Doe", CPF: "221.321-11", Secret: "tata"},
+		accountCreateRequest{
+			Name: "Arseny", CPF: "222.321-13", Secret: "tete"},
+	}
 
 	for _, testAccount := range testAccounts {
 
@@ -183,32 +186,6 @@ func TestCreateAccounts(t *testing.T) {
 	}
 }
 
-var badTestAccounts = []struct {
-	accReq    accountCreateRequest
-	publicErr *publicJSONError
-}{
-	{accountCreateRequest{Name: "John Doe", CPF: "220.321-111",
-		Secret: "toto"},
-		cpfInvalidError},
-	{accountCreateRequest{
-		Name:   "John Doeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-		CPF:    "220.321-11",
-		Secret: "toto"},
-		nameTooLongError},
-	{accountCreateRequest{
-		Name:   "John Doe",
-		CPF:    "220.321-111",
-		Secret: "totoooooooooooooooooooooooooooooooooooooooooooooooooooooooo"},
-		pwTooLongError},
-	{accountCreateRequest{
-		Name: "John Doe",
-		CPF:  "220.321-111",
-		Secret: `totoooooooooooooooooooooooooooooooooooooooooooooooooooooooo
-		oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
-		oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo`},
-		requestTooLongError},
-}
-
 func TestCreateBadAccounts(t *testing.T) {
 	var respBytes []byte
 	var err error
@@ -216,6 +193,34 @@ func TestCreateBadAccounts(t *testing.T) {
 	var jsonBytes []byte
 	var accReq accountCreateRequest
 	var jsonErr jsonError
+
+	var badTestAccounts = []struct {
+		accReq    accountCreateRequest
+		publicErr *publicJSONError
+	}{
+		{accountCreateRequest{Name: "John Doe", CPF: "220.321-111",
+			Secret: "toto"},
+			cpfInvalidError},
+		{accountCreateRequest{
+			Name:   "John Doeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeooo",
+			CPF:    "220.321-11",
+			Secret: "toto"},
+			nameTooLongError},
+		{accountCreateRequest{
+			Name:   "John Doe",
+			CPF:    "220.321-111",
+			Secret: "totoooooooooooooooooooooooooooooooooooooooooooooooooooo"},
+			pwTooLongError},
+		{accountCreateRequest{
+			Name: "John Doe",
+			CPF:  "220.321-111",
+			Secret: `totooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+			ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+			ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+			ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+			oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo`},
+			requestTooLongError},
+	}
 
 	for _, testAccountTuple := range badTestAccounts {
 
