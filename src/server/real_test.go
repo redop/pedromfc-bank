@@ -88,6 +88,8 @@ func TestWelcomeBadMethod(t *testing.T) {
 	}
 }
 
+// This is a big test that starts the server and talks to it with http.Client.
+// It deletes stuff in the database to clear it first.
 func TestMain(m *testing.M) {
 
 	// We don't care about authentication for these tests.
