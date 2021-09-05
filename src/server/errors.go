@@ -9,13 +9,13 @@ var jsonErrFmt = `{"error": "%s"}` + "\n"
 
 // An error that contains a JSON message safe to show to the client.
 type publicJSONError struct {
-	ErrJSON string
-	ErrMsg  string // useful for testing
-	Status  int
+	errJSON string
+	errMsg  string // useful for testing
+	status  int
 }
 
 func (err *publicJSONError) Error() string {
-	return err.ErrMsg
+	return err.errMsg
 }
 
 // Buold a public error. errMsg should be a simple error message, not in JSON,

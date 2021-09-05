@@ -67,8 +67,8 @@ func respondWithError(rw http.ResponseWriter, err error) error {
 	var errMsg string
 
 	if errors.As(err, &publicError) {
-		status = publicError.Status
-		errMsg = publicError.ErrJSON
+		status = publicError.status
+		errMsg = publicError.errJSON
 	} else {
 		status = http.StatusInternalServerError
 		errMsg = fmt.Sprintf(jsonErrFmt, "internal server error")

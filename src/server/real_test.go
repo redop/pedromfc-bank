@@ -175,7 +175,7 @@ func TestCreateAccounts(t *testing.T) {
 
 				if err != nil {
 					t.Error(err)
-				} else if jsonErr.Err != accExistsError.ErrMsg {
+				} else if jsonErr.Err != accExistsError.errMsg {
 					t.Fail()
 				}
 			}
@@ -232,7 +232,7 @@ func TestCreateBadAccounts(t *testing.T) {
 
 		if err != nil {
 			t.Error(err)
-		} else if resp.StatusCode != testAccountTuple.publicErr.Status {
+		} else if resp.StatusCode != testAccountTuple.publicErr.status {
 			t.Error(resp.StatusCode)
 			resp.Body.Close()
 		} else {
@@ -245,7 +245,7 @@ func TestCreateBadAccounts(t *testing.T) {
 
 				if err != nil {
 					t.Error(err)
-				} else if jsonErr.Err != testAccountTuple.publicErr.ErrMsg {
+				} else if jsonErr.Err != testAccountTuple.publicErr.errMsg {
 					t.Error(jsonErr.Err)
 				}
 			}
