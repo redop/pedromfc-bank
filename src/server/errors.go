@@ -10,11 +10,12 @@ var jsonErrFmt = `{"error": "%s"}` + "\n"
 // An error that contains a JSON message safe to show to the client.
 type publicJSONError struct {
 	ErrJSON string
+	ErrMsg  string // useful for testing
 	Status  int
 }
 
 func (err *publicJSONError) Error() string {
-	return err.ErrJSON
+	return err.ErrMsg
 }
 
 // Buold a public error. errMsg should be a simple error message, not in JSON,
@@ -22,6 +23,7 @@ func (err *publicJSONError) Error() string {
 func newPublicError(status int, errMsg string) *publicJSONError {
 	return &publicJSONError{
 		fmt.Sprintf(jsonErrFmt, errMsg),
+		errMsg,
 		status}
 }
 
