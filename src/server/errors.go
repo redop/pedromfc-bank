@@ -51,3 +51,7 @@ var wrongPasswordError = newPublicError(http.StatusBadRequest,
 	"wrong password")
 var tryAgainError = newPublicError(http.StatusConflict,
 	"please try again")
+var unauthorizedError = newPublicError(http.StatusUnauthorized,
+	"unauthorized")
+var noTokenError = newPublicError(http.StatusBadRequest,
+	"missing token")

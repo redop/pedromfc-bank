@@ -142,7 +142,73 @@ func login(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// Simple handler for a user to get his own id from his authorization token.
+// Mainly for testing.
+func getId(rw http.ResponseWriter, req *http.Request) {
+
+	if req.URL.Path != "/id" {
+		respondWithError(rw, invalidURLError)
+		return
+	}
+
+	if req.Method != http.MethodGet {
+		respondWithError(rw, invalidMethodError)
+		return
+	}
+
+	token := req.Header.Get("Authorization")
+
+	if token == "" {
+		respondWithError(rw, noTokenError)
+		return
+	}
+
+	id, err := getUserByToken(token, false)
+
+	if err != nil {
+		respondWithError(rw, err)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	setJSONEncoding(rw)
+
+	_, err = rw.Write([]byte(fmt.Sprintf("{\"id\":%d}\n", id)))
+
+	if err != nil {
+		logger.Printf("Could not write response: %v", err)
+	}
+}
+
 const loginTimeout = 2 * time.Minute
+
+// Get the user id for the user logged in with token, if any.
+// Also checks if an exisiting log in with the token has expired, and removes
+// it. If either the user isn't logged in or the log in expired, return
+// an error. Otherwise, return the id.
+//
+// If refresh is true and the user for token is present and not timed out,
+// the login time for the user will be refreshed to now.
+func getUserByToken(token string, refresh bool) (int, error) {
+	now := time.Now()
+	users.mu.Lock()
+	user, present := users.entries[token]
+	if present {
+		if user.loginTime.Add(loginTimeout).Before(now) {
+			delete(users.entries, token)
+			present = false
+		} else if refresh {
+			users.entries[token] = userEntry{user.id, now}
+		}
+	}
+	users.mu.Unlock()
+
+	if present {
+		return user.id, nil
+	} else {
+		return 0, unauthorizedError
+	}
+}
 
 // Periodically clean up expired logins. Call this in a goroutine. Cancel the
 // context to stop the goroutine.
