@@ -13,21 +13,6 @@ import (
 	"time"
 )
 
-// Redefine in32 as money so that we can use make a MarshalJSON method for it.
-// We represent the account balance as the actual balance time 100 (e.g. BRL
-// 223.15 is represented as 22315). We only support addition/substraction so
-// we don't need more decimals than two, for the BRL cents.
-type money int32
-
-// Stringify a money value. The last two digits are the cents.
-func (num money) String() string {
-	return fmt.Sprintf("%d.%d%d", num/100, (num%100)/10, (num%100)%10)
-}
-
-func (num money) MarshalJSON() ([]byte, error) {
-	return []byte(num.String()), nil
-}
-
 // Account entity from accounts table. Fields exported for JSON marshalling,
 // except for secret.
 type account struct {
