@@ -33,6 +33,11 @@ type accountCreateRequest struct {
 	Secret string `json:"secret"`
 }
 
+// JSON response to /accounts/<id>/balance
+type accountBalanceResponse struct {
+	Balance money `json:"balance"`
+}
+
 // Check if the account creation request from the client is valid.
 func (accReq *accountCreateRequest) validate() error {
 	if len(accReq.Name) > 32 {
@@ -309,7 +314,9 @@ func getAccountBalance(rw http.ResponseWriter, req *http.Request) {
 
 	// Our db uses ints for the ids, so max 32 bits. The regex already
 	// disallows negative numbers.
-	id, err := strconv.ParseInt(matches[1], 0, 32)
+	id64, err := strconv.ParseInt(matches[1], 0, 32)
+
+	id := int(id64)
 
 	if errors.Is(err, strconv.ErrRange) {
 		respondWithError(rw, idTooLargeError)
@@ -336,10 +343,23 @@ func getAccountBalance(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	var jsonResponse []byte
+	jsonResponse, err = json.Marshal(
+		&accountBalanceResponse{Balance: balance})
+
+	if err != nil {
+		logger.Printf("error when marshalling accounts")
+		respondWithError(rw, err)
+		return
+	}
+
 	setJSONEncoding(rw)
 
-	_, err = rw.Write([]byte(fmt.Sprintf("{\"id\":%d,\"balance\":%s}\n",
-		id, balance.String())))
+	_, err = rw.Write(jsonResponse)
+
+	if err == nil {
+		_, err = rw.Write([]byte("\n"))
+	}
 
 	if err != nil {
 		logger.Printf("Could not write response: %v", err)

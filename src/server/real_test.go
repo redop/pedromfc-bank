@@ -451,6 +451,36 @@ func TestCreateTransfers(t *testing.T) {
 		}
 	}
 
+	// Get the account balance to check it
+	resp, err = get(fmt.Sprintf("/accounts/%d/balance", accs[1].ID))
+
+	if err != nil {
+		t.Log(err)
+		resp.Body.Close()
+		t.FailNow()
+	}
+
+	respBytes, err = getResponseBytes(resp)
+
+	if err != nil {
+		t.Log(err)
+		resp.Body.Close()
+		t.FailNow()
+	}
+
+	var balanceResp accountBalanceResponse
+	err = json.Unmarshal(respBytes, &balanceResp)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if balanceResp.Balance != accs[0].Balance+transf.Amount {
+		t.Log(balanceResp.Balance)
+		t.Fail()
+	}
+
 	// Get the list of transfers
 	req, err = http.NewRequest(http.MethodGet, url+"/transfers",
 		bytes.NewReader(jsonBytes))
