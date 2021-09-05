@@ -30,6 +30,20 @@ func welcomeResponse(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func ping(rw http.ResponseWriter, req *http.Request) {
+	if req.URL.Path != "/ping" {
+		respondWithError(rw, invalidURLError)
+		return
+	}
+
+	if req.Method != http.MethodGet {
+		respondWithError(rw, invalidMethodError)
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
 var server http.Server = http.Server{Addr: "localhost:8080"}
 
 // Channel that signals when the server finishes
@@ -49,6 +63,7 @@ func Run(certsDir string) {
 		return
 	}
 
+	http.HandleFunc("/ping", ping)
 	http.HandleFunc("/", welcomeResponse)
 	http.HandleFunc("/accounts", handleAccounts)
 	http.HandleFunc("/accounts/", getAccountBalance)
