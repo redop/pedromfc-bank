@@ -77,7 +77,7 @@ func insertAccount(ctx context.Context,
 	var tx *sql.Tx
 	var acc account
 
-	tx, err = db.BeginTx(ctx, &defaultTxOptions)
+	tx, err = DB.BeginTx(ctx, &defaultTxOptions)
 
 	if err != nil {
 		logger.Print("Error starting tx to insert account")
@@ -208,7 +208,7 @@ func createAccount(rw http.ResponseWriter, req *http.Request) {
 // Handler for getting a list of accounts for GET requests at /accounts
 func getAccounts(rw http.ResponseWriter, req *http.Request) {
 
-	rows, err := db.Query(
+	rows, err := DB.Query(
 		"select id, name, cpf, balance, created_at from accounts")
 
 	if err != nil {
@@ -323,7 +323,7 @@ func getAccountBalance(rw http.ResponseWriter, req *http.Request) {
 
 	logger.Printf("Getting balance for account %d", id)
 
-	row := db.QueryRow("select balance from accounts where id = $1", id)
+	row := DB.QueryRow("select balance from accounts where id = $1", id)
 
 	var balance money
 	err = row.Scan(&balance)

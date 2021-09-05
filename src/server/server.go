@@ -55,13 +55,7 @@ var loginCleanerFinished = make(chan interface{})
 // Starts the http server. The -certs argument for the binary indicates the
 // location of the self-signed certificate and key.
 func Run(certsDir string) {
-	var err = openDBPool()
-	defer db.Close()
-
-	if err != nil {
-		logger.Fatal(err)
-		return
-	}
+	var err error
 
 	http.HandleFunc("/ping", ping)
 	http.HandleFunc("/", welcomeResponse)

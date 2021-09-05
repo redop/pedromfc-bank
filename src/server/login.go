@@ -89,7 +89,7 @@ func login(rw http.ResponseWriter, req *http.Request) {
 
 	var acc account
 
-	row := db.QueryRow(
+	row := DB.QueryRow(
 		"select id, secret from accounts where cpf = $1", loginReq.CPF)
 
 	err = row.Scan(&acc.ID, &acc.secret)
