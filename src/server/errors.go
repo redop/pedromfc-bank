@@ -55,3 +55,9 @@ var unauthorizedError = newPublicError(http.StatusUnauthorized,
 	"unauthorized")
 var noTokenError = newPublicError(http.StatusBadRequest,
 	"missing token")
+
+// Transfer errors
+var invalidAmountError = newPublicError(http.StatusBadRequest,
+	"invalid amount")
+var amountTooLargeError = newPublicError(http.StatusBadRequest,
+	"amount too large")
