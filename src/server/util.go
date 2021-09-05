@@ -81,6 +81,9 @@ func readFromReq(req *http.Request, maxLen int) ([]byte, error) {
 
 		if err == nil {
 			n, err = req.Body.Read(readBuf)
+		} else {
+			// eof
+			break
 		}
 	}
 
