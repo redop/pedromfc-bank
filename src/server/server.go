@@ -35,6 +35,9 @@ var server http.Server = http.Server{Addr: "localhost:8080"}
 // Channel that signals when the server finishes
 var ServerFinished = make(chan interface{})
 
+// Channel that signals when the login cleaner finishes
+var loginCleanerFinished = make(chan interface{})
+
 // Starts the http server. The -certs argument for the binary indicates the
 // location of the self-signed certificate and key.
 func Run(certsDir string) {
@@ -51,11 +54,21 @@ func Run(certsDir string) {
 	http.HandleFunc("/accounts/", getAccountBalance)
 	http.HandleFunc("/login", login)
 
+	loginCleanerContext, loginCleanerCancelFunc := context.WithCancel(
+		context.Background())
+
+	go loginClean(loginCleanerContext)
+
 	err = server.ListenAndServeTLS(
 		strings.Join([]string{certsDir, "/cert.pem"}, ""),
 		strings.Join([]string{certsDir, "/key.pem"}, ""))
 
 	logger.Print(err)
+
+	loginCleanerCancelFunc()
+
+	// Wait for the login cleaner to finish
+	<-loginCleanerFinished
 
 	close(ServerFinished)
 }

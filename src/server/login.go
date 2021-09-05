@@ -1,11 +1,13 @@
 package server
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/big"
 	"net/http"
 	"sync"
@@ -137,5 +139,50 @@ func login(rw http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		logger.Printf("Could not write response: %v", err)
+	}
+}
+
+const loginTimeout = 2 * time.Minute
+
+func loginClean(ctx context.Context) {
+
+	done := ctx.Done()
+
+	lastCheck := time.Now()
+
+	// Notify the server that we exited.
+	defer close(loginCleanerFinished)
+
+	for {
+		// Check if we should stop.
+		select {
+		case _, ok := <-done:
+			if !ok {
+				// Channel closed, return.
+				log.Print("Login cleaner exiting...")
+				return
+			}
+		default:
+		}
+
+		// We only clean the logins every minute, but we want to wake up more
+		// frequently to check if we should stop.
+		time.Sleep(100 * time.Millisecond)
+
+		now := time.Now()
+
+		// Only clean up the logins every minute or so, since we go through
+		// the whole map.
+		if lastCheck.Add(time.Minute).Before(now) {
+			log.Println("Cleaning up logins")
+			lastCheck = now
+			users.mu.Lock()
+			for token, entry := range users.entries {
+				if entry.loginTime.Add(loginTimeout).Before(now) {
+					delete(users.entries, token)
+				}
+			}
+			users.mu.Unlock()
+		}
 	}
 }
