@@ -385,6 +385,12 @@ func TestCreateTransfers(t *testing.T) {
 		t.FailNow()
 	}
 
+	if resp.StatusCode != http.StatusCreated {
+		t.Log(resp.StatusCode)
+		resp.Body.Close()
+		t.FailNow()
+	}
+
 	respBytes, err = getResponseBytes(resp)
 
 	if err != nil {
@@ -402,6 +408,7 @@ func TestCreateTransfers(t *testing.T) {
 	}
 
 	if transf.Amount != transfReq.Amount {
+		t.Log(transf.Amount)
 		t.FailNow()
 	}
 
@@ -442,6 +449,61 @@ func TestCreateTransfers(t *testing.T) {
 				t.Fail()
 			}
 		}
+	}
+
+	// Get the list of transfers
+	req, err = http.NewRequest(http.MethodGet, url+"/transfers",
+		bytes.NewReader(jsonBytes))
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	req.Header.Set("Authorization", tokJSON.Token)
+
+	resp, err = client.Do(req)
+
+	if err != nil {
+		t.Log(err)
+		resp.Body.Close()
+		t.FailNow()
+	}
+
+	respBytes, err = getResponseBytes(resp)
+
+	if err != nil {
+		t.Log(err)
+		resp.Body.Close()
+		t.FailNow()
+	}
+
+	var transfers []transfer
+	err = json.Unmarshal(respBytes, &transfers)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if len(transfers) != 1 {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if transfers[0].OriginID != accs[0].ID {
+		t.Log(transfers[0].OriginID)
+		t.Fail()
+	}
+
+	if transfers[0].DestinationID != accs[1].ID {
+		t.Log(transfers[0].DestinationID)
+		t.Fail()
+	}
+
+	if transfers[0].Amount != transfReq.Amount {
+		t.Log(transfers[0].Amount)
+		t.Fail()
 	}
 }
 

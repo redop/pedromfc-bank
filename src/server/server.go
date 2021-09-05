@@ -65,7 +65,7 @@ func Run(certsDir string) {
 	http.HandleFunc("/accounts/", getAccountBalance)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/id", getId)
-	http.HandleFunc("/transfers", transferHandler)
+	http.HandleFunc("/transfers", handleTransfers)
 
 	loginCleanerContext, loginCleanerCancelFunc := context.WithCancel(
 		context.Background())

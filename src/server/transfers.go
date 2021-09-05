@@ -193,33 +193,10 @@ func insertTransfer(
 
 // Handler for POST at /transfers. Gets the origin id from the token, if any,
 // and the destination id from the request.
-func transferHandler(rw http.ResponseWriter, req *http.Request) {
-
-	if req.URL.Path != "/transfers" {
-		respondWithError(rw, invalidURLError)
-		return
-	}
-
-	if req.Method != http.MethodPost {
-		respondWithError(rw, invalidMethodError)
-		return
-	}
-
-	token := req.Header.Get("Authorization")
-
-	if token == "" {
-		respondWithError(rw, noTokenError)
-		return
-	}
-
-	id, err := getUserByToken(token, true)
-
-	if err != nil {
-		respondWithError(rw, err)
-		return
-	}
-
+func doTransfer(rw http.ResponseWriter, req *http.Request, id int) {
+	var err error
 	var data []byte
+
 	data, err = readFromReq(req, 128)
 
 	if err != nil {
@@ -288,5 +265,104 @@ func transferHandler(rw http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		logger.Printf("Could not write response: %v", err)
+	}
+}
+
+// Handler for GET at /transfers.
+func getTransfers(rw http.ResponseWriter, req *http.Request, id int) {
+	rows, err := DB.Query(
+		`select id, origin_id, destination_id, amount, created_at
+		 from transfers where origin_id = $1 or destination_id = $1`, id)
+
+	if err != nil {
+		respondWithError(rw, err)
+		return
+	}
+
+	defer rows.Close()
+
+	var transf transfer
+
+	// No pagination for simplicity
+	var transfs []transfer = make([]transfer, 0, 64)
+
+	next_p := rows.Next()
+
+	for next_p {
+		err = rows.Scan(&transf.ID, &transf.OriginID, &transf.DestinationID,
+			&transf.Amount, &transf.CreatedAt)
+
+		if err != nil {
+			logger.Printf("error when querying transfers")
+			respondWithError(rw, err)
+			return
+		}
+
+		transfs = append(transfs, transf)
+
+		next_p = rows.Next()
+	}
+
+	if err = rows.Err(); err != nil {
+		logger.Printf("error when querying transfers")
+		respondWithError(rw, err)
+		return
+	}
+
+	var jsonResponse []byte
+	jsonResponse, err = json.Marshal(transfs)
+
+	if err != nil {
+		logger.Printf("error when marshalling transfers")
+		respondWithError(rw, err)
+		return
+	}
+
+	setJSONEncoding(rw)
+
+	_, err = rw.Write(jsonResponse)
+
+	if err == nil {
+		_, err = rw.Write([]byte("\n"))
+	}
+
+	if err != nil {
+		logger.Printf("Could not write response: %v", err)
+	}
+}
+
+// Route requests to /transfers depending on the method (GET or POST)
+func handleTransfers(rw http.ResponseWriter, req *http.Request) {
+
+	if req.URL.Path != "/transfers" {
+		respondWithError(rw, invalidURLError)
+		return
+	}
+
+	if req.Method != http.MethodGet && req.Method != http.MethodPost {
+		respondWithError(rw, invalidMethodError)
+		return
+	}
+
+	token := req.Header.Get("Authorization")
+
+	if token == "" {
+		respondWithError(rw, noTokenError)
+		return
+	}
+
+	id, err := getUserByToken(token, true)
+
+	if err != nil {
+		respondWithError(rw, err)
+		return
+	}
+
+	if req.Method == http.MethodPost {
+		doTransfer(rw, req, id)
+	} else if req.Method == http.MethodGet {
+		getTransfers(rw, req, id)
+	} else {
+		respondWithError(rw, invalidMethodError)
 	}
 }
