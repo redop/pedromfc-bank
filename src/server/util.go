@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 var logger = log.New(os.Stdout, "server: ", log.LstdFlags|log.Lmsgprefix)
@@ -25,6 +26,33 @@ func (num money) String() string {
 
 func (num money) MarshalJSON() ([]byte, error) {
 	return []byte(num.String()), nil
+}
+
+var moneyRegex *regexp.Regexp = regexp.MustCompile(
+	`^([0-9]+)\.([0-9][0-9])$`)
+
+func (num *money) UnmarshalJSON(bytes []byte) error {
+	strVal := string(bytes)
+
+	if !moneyRegex.MatchString(strVal) {
+		return invalidAmountError
+	}
+
+	strVal = moneyRegex.ReplaceAllString(strVal, "$1$2")
+
+	val, err := strconv.ParseInt(strVal, 0, 32)
+
+	if errors.Is(err, strconv.ErrRange) {
+		return amountTooLargeError
+	} else if err != nil {
+		// Shouldn't happen since we validated the int from the regex
+		logger.Printf("Could not convert amount (???)")
+		return err
+	}
+
+	*num = money(val)
+
+	return nil
 }
 
 // Respond to the client with an error. If err has a public error in its
