@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+const welcomeSring = "Welcome to PedroBank!\n"
+
 // Respond with a welcome message when client GETs path /
 // Respond with an error for other paths matched by this function.
 func welcomeResponse(rw http.ResponseWriter, req *http.Request) {
@@ -23,7 +25,7 @@ func welcomeResponse(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	setJSONEncoding(rw)
-	_, err := fmt.Fprintf(rw, "Welcome to PedroBank!\n")
+	_, err := fmt.Fprint(rw, welcomeSring)
 
 	if err != nil {
 		logger.Printf("could not write response: %v", err)
