@@ -1,7 +1,9 @@
 package server
 
 import (
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,18 +13,28 @@ import (
 	"time"
 )
 
+type jsonError struct {
+	Err string `json:"error"`
+}
+
 const url = "https://localhost:8080"
 
 func get(path string) (*http.Response, error) {
 	return client.Get(url + path)
 }
 
-func postJSON(path string, jsonString string) (*http.Response, error) {
+func postJSONString(path string, jsonString string) (*http.Response, error) {
 	return client.Post(url+path, "application/json",
 		strings.NewReader(jsonString))
 }
 
+func postJSONBytes(path string, jsonBytes []byte) (*http.Response, error) {
+	return client.Post(url+path, "application/json",
+		bytes.NewReader(jsonBytes))
+}
+
 func getResponseString(resp *http.Response) (string, error) {
+	defer resp.Body.Close()
 	var respBytes []byte
 	respBytes, err := io.ReadAll(resp.Body)
 
@@ -30,6 +42,18 @@ func getResponseString(resp *http.Response) (string, error) {
 		return "", err
 	} else {
 		return string(respBytes), nil
+	}
+}
+
+func getResponseBytes(resp *http.Response) ([]byte, error) {
+	defer resp.Body.Close()
+	var respBytes []byte
+	respBytes, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return nil, err
+	} else {
+		return respBytes, nil
 	}
 }
 
@@ -76,7 +100,7 @@ func TestBadURL(t *testing.T) {
 }
 
 func TestWelcomeBadMethod(t *testing.T) {
-	resp, err := postJSON("/", "what")
+	resp, err := postJSONString("/", "what")
 
 	if err != nil {
 		t.Error(err)
@@ -85,6 +109,147 @@ func TestWelcomeBadMethod(t *testing.T) {
 
 	if resp.StatusCode != http.StatusMethodNotAllowed {
 		t.Error(resp.StatusCode)
+	}
+}
+
+var testAccounts = []accountCreateRequest{
+	accountCreateRequest{Name: "John Doe", CPF: "220.321-11", Secret: "toto"},
+	accountCreateRequest{Name: "Jane Doe", CPF: "221.321-11", Secret: "tata"},
+	accountCreateRequest{Name: "Arseny", CPF: "222.321-13", Secret: "tete"},
+}
+
+func TestCreateAccounts(t *testing.T) {
+	var respBytes []byte
+	var err error
+	var resp *http.Response
+	var jsonBytes []byte
+	var acc account
+	var jsonErr jsonError
+
+	for _, testAccount := range testAccounts {
+
+		jsonBytes, err = json.Marshal(&testAccount)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		resp, err = postJSONBytes("/accounts", jsonBytes)
+
+		if err != nil {
+			t.Error(err)
+		} else if resp.StatusCode != http.StatusCreated {
+			t.Error(resp.StatusCode)
+			resp.Body.Close()
+		} else {
+			respBytes, err = getResponseBytes(resp)
+
+			if err != nil {
+				t.Error(err)
+			} else {
+				err = json.Unmarshal(respBytes, &acc)
+				if err != nil {
+					t.Error(err)
+				} else if testAccount.CPF != acc.CPF {
+					t.Error(acc.CPF)
+				}
+			}
+		}
+
+		// Re-insert the account with the same CPF
+		resp, err = postJSONBytes("/accounts", jsonBytes)
+
+		if err != nil {
+			t.Error(err)
+		} else if resp.StatusCode != http.StatusBadRequest {
+			t.Error(resp.StatusCode)
+			resp.Body.Close()
+		} else {
+			respBytes, err = getResponseBytes(resp)
+
+			if err != nil {
+				t.Error(err)
+			} else {
+				err = json.Unmarshal(respBytes, &jsonErr)
+
+				if err != nil {
+					t.Error(err)
+				} else if jsonErr.Err != accExistsError.ErrMsg {
+					t.Fail()
+				}
+			}
+		}
+	}
+}
+
+var badTestAccounts = []struct {
+	accReq    accountCreateRequest
+	publicErr *publicJSONError
+}{
+	{accountCreateRequest{Name: "John Doe", CPF: "220.321-111",
+		Secret: "toto"},
+		cpfInvalidError},
+	{accountCreateRequest{
+		Name:   "John Doeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+		CPF:    "220.321-11",
+		Secret: "toto"},
+		nameTooLongError},
+	{accountCreateRequest{
+		Name:   "John Doe",
+		CPF:    "220.321-111",
+		Secret: "totoooooooooooooooooooooooooooooooooooooooooooooooooooooooo"},
+		pwTooLongError},
+	{accountCreateRequest{
+		Name: "John Doe",
+		CPF:  "220.321-111",
+		Secret: `totoooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+		oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+		oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo`},
+		requestTooLongError},
+}
+
+func TestCreateBadAccounts(t *testing.T) {
+	var respBytes []byte
+	var err error
+	var resp *http.Response
+	var jsonBytes []byte
+	var accReq accountCreateRequest
+	var jsonErr jsonError
+
+	for _, testAccountTuple := range badTestAccounts {
+
+		accReq = testAccountTuple.accReq
+
+		jsonBytes, err = json.Marshal(&accReq)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		resp, err = postJSONBytes("/accounts", jsonBytes)
+
+		if err != nil {
+			t.Error(err)
+		} else if resp.StatusCode != testAccountTuple.publicErr.Status {
+			t.Error(resp.StatusCode)
+			resp.Body.Close()
+		} else {
+			respBytes, err = getResponseBytes(resp)
+
+			if err != nil {
+				t.Error(err)
+			} else {
+				err = json.Unmarshal(respBytes, &jsonErr)
+
+				if err != nil {
+					t.Error(err)
+				} else if jsonErr.Err != testAccountTuple.publicErr.ErrMsg {
+					t.Error(jsonErr.Err)
+				}
+			}
+		}
 	}
 }
 
