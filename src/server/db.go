@@ -16,7 +16,7 @@ var defaultTxOptions = sql.TxOptions{Isolation: sql.LevelRepeatableRead,
 // Try to open a connection and ping the database
 func OpenDBPool() error {
 	dbConnConfig, err := pgx.ParseConfig(
-		"postgresql://postgres@localhost/pedro_bank")
+		"postgresql://postgres:dbpwd@localhost:5432/pedro_bank")
 
 	if err == nil {
 		DB = pgxstdlib.OpenDB(*dbConnConfig)

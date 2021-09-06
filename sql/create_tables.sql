@@ -1,4 +1,3 @@
-DROP DATABASE pedro_bank;
 CREATE DATABASE pedro_bank;
 
 \c pedro_bank

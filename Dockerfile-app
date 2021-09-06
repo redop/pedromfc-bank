@@ -1,0 +1,9 @@
+FROM golang
+WORKDIR /go/pedro-bank/src
+COPY ./src/go.mod ./go.mod
+COPY ./src/server ./server
+COPY ./src/main ./main
+COPY ./certs ../certs
+RUN ["go", "get", "pedro-bank/main"]
+RUN ["go", "install", "pedro-bank/main"]
+CMD ["go", "run",  "pedro-bank/main", "--certs", "../certs"]
