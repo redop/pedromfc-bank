@@ -72,6 +72,8 @@ func Run(certsDir string) {
 
 	go loginClean(loginCleanerContext)
 
+	logger.Println("Starting PedroBank server")
+
 	err = server.ListenAndServeTLS(
 		strings.Join([]string{certsDir, "/cert.pem"}, ""),
 		strings.Join([]string{certsDir, "/key.pem"}, ""))
